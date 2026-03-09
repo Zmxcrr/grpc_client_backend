@@ -52,7 +52,10 @@ import { GrpcCallLog } from './grpc-call-logs/entities/grpc-call-log.entity';
           RequestHistory,
           GrpcCallLog,
         ],
-        // WARNING: synchronize: true auto-alters the schema. Use migrations for production.
+        // WARNING: synchronize:true auto-alters the schema on startup — convenient for development,
+        // but dangerous in production. For production, disable this and run TypeORM migrations:
+        //   npx typeorm migration:generate -n MigrationName
+        //   npx typeorm migration:run
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') === 'development',
       }),

@@ -7,16 +7,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const secret = config.get<string>('JWT_SECRET');
-        if (!secret) {
-          throw new Error('JWT_SECRET environment variable is not set. Refusing to start with an insecure default.');
-        }
-        return {
-          secret,
-          signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '7d') },
-        };
-      },
+      useFactory: (config: ConfigService) => ({
+        secret: config.getOrThrow<string>('JWT_SECRET'),
+        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '7d') },
+      }),
     }),
   ],
   exports: [JwtModule],
