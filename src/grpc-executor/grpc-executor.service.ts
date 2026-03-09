@@ -154,7 +154,7 @@ export class GrpcExecutorService {
 
       call.on('end', async () => {
         const durationMs = Date.now() - startTime;
-        await this.recordCall(dto, durationMs, 'SUCCESS', undefined, undefined, userId);
+        await this.recordCall(dto, durationMs, 'SUCCESS', undefined, undefined, userId, true);
         subject.next({
           type: 'end',
           data: { durationMs },
@@ -165,7 +165,7 @@ export class GrpcExecutorService {
       });
     } catch (err) {
       const durationMs = Date.now() - startTime;
-      await this.recordCall(dto, durationMs, 'ERROR', undefined, err.message, userId);
+      await this.recordCall(dto, durationMs, 'ERROR', undefined, err.message, userId, true);
       subject.next({
         type: 'error',
         message: err.message,
@@ -223,6 +223,7 @@ export class GrpcExecutorService {
     response?: any,
     error?: string,
     userId?: string,
+    isStreaming = false,
   ) {
     await Promise.all([
       this.historyService.create({
@@ -235,7 +236,7 @@ export class GrpcExecutorService {
         response,
         error,
         durationMs,
-        isStreaming: false,
+        isStreaming,
         status,
         userId,
       }),

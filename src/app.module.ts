@@ -52,6 +52,7 @@ import { GrpcCallLog } from './grpc-call-logs/entities/grpc-call-log.entity';
           RequestHistory,
           GrpcCallLog,
         ],
+        // WARNING: synchronize: true auto-alters the schema. Use migrations for production.
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') === 'development',
       }),
