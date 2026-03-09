@@ -7,6 +7,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+import { v4 as uuidv4 } from 'uuid';
 import { ProtoSchema } from './entities/proto-schema.entity';
 import { UploadProtoDto } from './dto/upload-proto.dto';
 
@@ -120,7 +121,7 @@ export class ProtoService {
 
   private async parseProto(proto: ProtoSchema): Promise<ProtoTree> {
     const tmpDir = os.tmpdir();
-    const tmpFile = path.join(tmpDir, `proto_${proto.id}_${Date.now()}.proto`);
+    const tmpFile = path.join(tmpDir, `proto_${uuidv4()}.proto`);
     
     try {
       fs.writeFileSync(tmpFile, proto.content);

@@ -178,8 +178,8 @@ export class GrpcExecutorService {
     }
   }
 
-  private async writeTempProto(content: string, id: string): Promise<string> {
-    const tmpFile = path.join(os.tmpdir(), `exec_proto_${id}_${Date.now()}.proto`);
+  private async writeTempProto(content: string, _id: string): Promise<string> {
+    const tmpFile = path.join(os.tmpdir(), `exec_proto_${uuidv4()}.proto`);
     fs.writeFileSync(tmpFile, content);
     return tmpFile;
   }
