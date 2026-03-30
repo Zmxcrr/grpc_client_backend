@@ -1,31 +1,40 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-jwt';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
-import { UsersService } from '../../users/users.service';
+
+type JwtPayload = {
+    sub: string;
+    email: string;
+    role: string;
+    iat?: number;
+    exp?: number;
+};
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly usersService: UsersService,
-  ) {
-    super({
-      jwtFromRequest: (req: Request) => {
-        if (req && req.cookies) return req.cookies['access_token'];
-        return null;
-      },
-      ignoreExpiration: false,
-      secretOrKey: configService.getOrThrow('JWT_SECRET'),
-    });
-  }
+    constructor(private readonly configService: ConfigService) {
+        const cookieExtractor = (req: Request): string | null => {
+            if (!req?.cookies) return null;
+            return req.cookies['access_token'] ?? null;
+        };
 
-  async validate(payload: any) {
-    const user = await this.usersService.findById(payload.sub);
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('User not found or inactive');
+        super({
+            jwtFromRequest: ExtractJwt.fromExtractors([
+                cookieExtractor,
+                ExtractJwt.fromAuthHeaderAsBearerToken(),
+            ]),
+            ignoreExpiration: false,
+            secretOrKey: configService.get<string>('JWT_SECRET', 'dev_secret_change_me'),
+        });
     }
-    return user;
-  }
+
+    async validate(payload: JwtPayload) {
+        return {
+            id: payload.sub,
+            email: payload.email,
+            role: payload.role,
+        };
+    }
 }

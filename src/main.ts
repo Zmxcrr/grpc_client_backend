@@ -5,38 +5,57 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule);
 
-  if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-    console.error('FATAL: JWT_SECRET environment variable is not set in production mode. Exiting.');
-    process.exit(1);
-  }
-  
-  app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
-  app.use(cookieParser());
-  
-  app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-    credentials: true,
-  });
+    if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+        console.error('FATAL: JWT_SECRET environment variable is not set in production mode. Exiting.');
+        process.exit(1);
+    }
 
-  const config = new DocumentBuilder()
-    .setTitle('gRPC IDE API')
-    .setDescription('REST API for gRPC IDE backend. GraphQL available at /graphql.')
-    .setVersion('1.0')
-    .addCookieAuth('access_token')
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('proto', 'Proto schema upload/download')
-    .addTag('grpc', 'gRPC execution endpoints')
-    .addTag('sse', 'Server-Sent Events endpoints')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.use(cookieParser());
 
-  await app.listen(process.env.PORT || 3000);
-  console.log(`Application running on port ${process.env.PORT || 3000}`);
-  console.log(`Swagger UI: http://localhost:${process.env.PORT || 3000}/api`);
-  console.log(`GraphQL: http://localhost:${process.env.PORT || 3000}/graphql`);
+    app.enableCors({
+        origin: (origin, callback) => {
+            const allowed = new Set([
+                'http://localhost:5173',
+                'http://127.0.0.1:5173',
+                'http://[::1]:5173',
+            ]);
+
+            if (!origin || allowed.has(origin)) {
+                callback(null, true);
+                return;
+            }
+
+            callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+        },
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    });
+
+    const config = new DocumentBuilder()
+        .setTitle('gRPC IDE API')
+        .setDescription('REST API for gRPC IDE backend. GraphQL available at /graphql.')
+        .setVersion('1.0')
+        .addCookieAuth('access_token')
+        .addTag('auth', 'Authentication endpoints')
+        .addTag('proto', 'Proto schema upload/download')
+        .addTag('grpc', 'gRPC execution endpoints')
+        .addTag('sse', 'Server-Sent Events endpoints')
+        .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+
+    const port = process.env.PORT || 3000;
+    await app.listen(port);
+
+    console.log(`Application running on port ${port}`);
+    console.log(`Swagger UI: http://localhost:${port}/api`);
+    console.log(`GraphQL: http://localhost:${port}/graphql`);
 }
+
 bootstrap();
